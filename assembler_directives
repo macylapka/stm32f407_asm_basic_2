@@ -1,0 +1,184 @@
+############################## .section ##################################
+.section name
+
+Use the .section directive to assemble the following code into a section named name.
+
+This directive is only supported for targets that actually support arbitrarily named sections; 
+on a.out targets, for example, it is not accepted, even with a standard a.out section name.
+
+If the optional argument to the .section directive is not quoted, it is taken as a subsegment number (Section 5.4 Sub-Sections).
+
+##### ELF Version
+
+This is one of the ELF section stack manipulation directives. The others are: 
+.subsection  (.subsection name), 
+.pushsection (.pushsection name, subsection), 
+.popsection  (.popsection),
+.previous    (.previous).
+
+For ELF targets, the .section directive is used like this:
+
+.section name [, "flags"[, @type[,flag_specific_arguments]]
+
+The optional flags argument is a quoted string which may contain any combination of the following characters:
+
+a - section is allocatable 
+w - section is writable 
+x - section is executable 
+M - section is mergeable 
+S - section contains zero terminated strings 
+G - section is a member of a section group 
+T - section is used for thread-local-storage 
+
+The optional type argument may contain one of the following constants:
+
+@progbits      - section contains data 
+@nobits        - section does not contain data (i.e., section only occupies space) 
+@note          - section contains data which is used by things other than the program 
+@init_array    - section contains an array of pointers to init functions 
+@fini_array    - section contains an array of pointers to finish functions 
+@preinit_array - section contains an array of pointers to pre-init functions 
+
+Many targets only support the first three section types.
+
+Note on targets where the @ character is the start of a comment (eg ARM) then 
+another character is used instead. For example the ARM port uses the % character.
+
+If flags contains the M symbol then the type argument must be specified as well as an extra argument - entsize - like this:
+
+.section name , "flags"M, @type, entsize
+
+
+Sections with the M flag but not S flag must contain fixed size constants, each entsize octets long. Sections with both M and S must contain zero terminated strings where each character is entsize bytes long. The linker may remove duplicates within sections with the same name, same entity size and same flags. entsize must be an absolute expression.
+
+
+If flags contains the G symbol then the type argument must be present along with an additional field like this:
+
+.section name , "flags"G, @type, GroupName[, linkage]
+
+
+The GroupName field specifies the name of the section group to which this particular section belongs. The optional linkage field can contain:
+
+comdat        - indicates that only one copy of this section should be retained 
+.gnu.linkonce - an alias for comdat 
+
+
+Note - if both the M and G flags are present then the fields for the Merge flag should come first, like this:
+
+.section name , "flags"MG, @type, entsize, GroupName[, linkage]
+
+If no flags are specified, the default flags depend upon the section name. If the section name is not recognized, the default will be for the section to have none of the above flags: it will not be allocated in memory, nor writable, nor executable. The section will contain data.
+
+For ELF targets, the assembler supports another type of .section directive for compatibility with the Solaris assembler:
+
+.section "name"[, flags...]
+
+Note that the section name is quoted. There may be a sequence of comma separated flags:
+
+#alloc     - section is allocatable 
+#write     - section is writable 
+#execinstr - section is executable 
+#tls       - section is used for thread local storage 
+
+This directive replaces the current section and subsection. See the contents of the gas testsuite directory gas/testsuite/gas/elf for some examples of how this directive and the other section stack directives work. 
+
+################################ .text ###################################
+.text -  Tells as to assemble the following statements onto the end of  
+the text subsection numbered subsection, which is an absolute expression. 
+If subsection is omitted, subsection number zero is used.                 
+
+################################ .size ###################################
+.size - This directive is used to set the size associated with a symbol.
+usage - .size name, expression
+
+################################ .type ###################################
+.type - This directive is used to set the type of a symbol
+usage - .type name, type description
+.type <name>, %function 
+.type <name>, %object
+
+############################## .protected #################################
+.protected - This is one of the ELF visibility directives. 
+usage - .protected names
+
+The other two are: 
+.hidden   (.hidden names)
+.internal (.internal names).
+
+This directive overrides the named symbols default visibility (which is set by their binding: local, global or weak). The directive sets the visibility to protected which means that any references to the symbols from within the components that defines them must be resolved to the definition in that component, even if a definition in another component would normally preempt this. 
+
+################################ .print ###################################
+.print - as will print string on the standard output during assembly. You must put string in double quotes. 
+usage - .print string
+
+############################### .include ##################################
+.include - This directive provides a way to include supporting files at specified points in your source program.
+usage - .include "file"
+
+The code from file is assembled as if it followed the point of the .include; when the end of the included file is reached, assembly of the original file continues. You can control the search paths used with the -I command-line option (Chapter 3 Command-Line Options). Quotation marks are required around file. 
+
+################################### .if ################################### 
+.if marks the beginning of a section of code which is only considered part of the source program being assembled if the argument (which must be an absolute expression) is non-zero.
+usage - .if absolute expression
+
+The end of the conditional section of code must be marked by 
+.endif  optionally, you may include code for the alternative condition, flagged by 
+.else   if you have several conditions to check, 
+.elseif may be used to avoid nesting blocks if/else within each subsequent .else block.
+
+The following variants of .if are also supported:
+
+.ifdef symbol
+
+    Assembles the following section of code if the specified symbol has been defined. Note a symbol which has been referenced but not yet defined is considered to be undefined.
+
+.ifc string1,string2
+
+    Assembles the following section of code if the two strings are the same. The strings may be optionally quoted with single quotes. If they are not quoted, the first string stops at the first comma, and the second string stops at the end of the line. Strings which contain whitespace should be quoted. The string comparison is case sensitive.
+
+.ifeq absolute expression
+
+    Assembles the following section of code if the argument is zero.
+
+.ifeqs string1,string2
+
+    Another form of .ifc. The strings must be quoted using double quotes.
+
+.ifge absolute expression
+
+    Assembles the following section of code if the argument is greater than or equal to zero.
+
+.ifgt absolute expression
+
+    Assembles the following section of code if the argument is greater than zero.
+
+.ifle absolute expression
+
+    Assembles the following section of code if the argument is less than or equal to zero.
+
+.iflt absolute expression
+
+    Assembles the following section of code if the argument is less than zero.
+
+.ifnc string1,string2.
+
+    Like .ifc, but the sense of the test is reversed: this assembles the following section of code if the two strings are not the same.
+
+.ifndef symbol, .ifnotdef symbol
+
+    Assembles the following section of code if the specified symbol has not been defined. Both spelling variants are equivalent. Note a symbol which has been referenced but not yet defined is considered to be undefined.
+
+.ifne absolute expression
+
+    Assembles the following section of code if the argument is not equal to zero (in other words, this is equivalent to .if).
+
+.ifnes string1,string2
+
+    Like .ifeqs, but the sense of the test is reversed: this assembles the following section of code if the two strings are not the same. 
+
+################################ .global or .globl ################################
+.global symbol , .globl symbol - makes the symbol visible to ld. If you define symbol in your partial program, its value is made available to other partial programs that are linked with it. Otherwise, symbol takes its attributes from a symbol of the same name from another file linked into the same program. 
+usage - .global symbol , .globl symbol
+
+################################ . ################################
+The special symbol `.' refers to the current address that as is assembling into. Thus, the expression `melvin: .long .' defines melvin to contain its own address. Assigning a value to . is treated the same as a .org directive. Thus, the expression `.=.+4' is the same as saying `.space 4'. 

@@ -1,0 +1,10 @@
+#define bob 10
+.equ bob,10
+
+unsigned int ted;
+ted: 
+.word 0
+
+unsigned int alice=5;
+alice:
+.word 5
